@@ -32,7 +32,7 @@ recoverydata=pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVI
 recoverydata.columns=[column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata=pd.read_csv('c:\\city.csv')
-currentdate = '9_15_20'
+currentdate = '9_16_20'
 old=[ 5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 #-----------------------------------focus on Russia
 df=df.query('Country_Region == "Russia"')
@@ -219,7 +219,7 @@ fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
-datelist = pd.date_range(start='1/22/2020', end='09/15/2020', tz=None).tolist() # List of dates
+datelist = pd.date_range(start='1/22/2020', end='09/16/2020', tz=None).tolist() # List of dates
 aidatelist = pd.date_range(start='09/16/2020', end='09/18/2020', tz=None).tolist()
 oldlist= pd.date_range(start='04/23/2020', end='04/28/2020', tz=None).tolist()
 
