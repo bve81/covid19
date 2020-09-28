@@ -47,7 +47,7 @@ labels=['Умерло','Вылечилось'] #labels for pie chart
 labelst=['Активных']
 #-----------------------------------Value from tables
 
-for value in deathdata['9_27_20']:
+for value in deathdata['9_26_20']:
     dd=value
 for value in deathdata[currentdate]:
     d1=value
@@ -220,7 +220,7 @@ fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
 datelist = pd.date_range(start='1/22/2020', end='09/27/2020', tz=None).tolist() # List of dates
-aidatelist = pd.date_range(start='09/16/2020', end='09/27/2020', tz=None).tolist()
+aidatelist = pd.date_range(start='09/28/2020', end='10/01/2020', tz=None).tolist()
 oldlist= pd.date_range(start='04/23/2020', end='04/28/2020', tz=None).tolist()
 
 
