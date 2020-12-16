@@ -31,7 +31,7 @@ deathdata.columns=[column.replace("/", "_") for column in deathdata.columns]
 recoverydata=pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
 recoverydata.columns=[column.replace("/", "_") for column in recoverydata.columns]
 
-mapdata=pd.read_csv('c:\\city.csv')
+mapdata=pd.read_csv('city.csv')
 currentdate = '12_15_20'
 old=[ 5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 #-----------------------------------focus on Russia
@@ -75,7 +75,7 @@ for i in df2.columns:
         cc=value
 
 #------------------------------------AI part forecasting
-daily_cases = cc[220:]
+daily_cases = cc[320:]
 #print(daily_cases)
 scaler = MinMaxScaler()
 
