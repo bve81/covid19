@@ -32,7 +32,7 @@ recoverydata=pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVI
 recoverydata.columns=[column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata=pd.read_csv('c:\\city.csv')
-currentdate = '9_27_20'
+currentdate = '12_15_20'
 old=[ 5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 #-----------------------------------focus on Russia
 df=df.query('Country_Region == "Russia"')
@@ -47,7 +47,7 @@ labels=['Умерло','Вылечилось'] #labels for pie chart
 labelst=['Активных']
 #-----------------------------------Value from tables
 
-for value in deathdata['9_26_20']:
+for value in deathdata['12_14_20']:
     dd=value
 for value in deathdata[currentdate]:
     d1=value
@@ -75,7 +75,7 @@ for i in df2.columns:
         cc=value
 
 #------------------------------------AI part forecasting
-daily_cases = cc[1:]
+daily_cases = cc[220:]
 #print(daily_cases)
 scaler = MinMaxScaler()
 
@@ -142,7 +142,7 @@ def train_model(
   loss_fn = torch.nn.MSELoss(reduction='sum')
 
   optimiser = torch.optim.Adam(model.parameters(), lr=1e-3)
-  num_epochs = 160
+  num_epochs = 50
 
   train_hist = np.zeros(num_epochs)
   test_hist = np.zeros(num_epochs)
@@ -179,14 +179,14 @@ def train_model(
 
 model = CoronaVirusPredictor(
   n_features=1,
-  n_hidden=512,
+  n_hidden=1024,
   seq_len=seq_length,
-  n_layers=2
+  n_layers=4
 )
 model, train_hist, _ = train_model(model, X_all, y_all)
 
 
-DAYS_TO_PREDICT = 5
+DAYS_TO_PREDICT = 15
 
 with torch.no_grad():
   test_seq = X_all[:1]
@@ -219,8 +219,8 @@ fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
-datelist = pd.date_range(start='1/22/2020', end='09/27/2020', tz=None).tolist() # List of dates
-aidatelist = pd.date_range(start='09/28/2020', end='10/01/2020', tz=None).tolist()
+datelist = pd.date_range(start='1/22/2020', end='12/15/2020', tz=None).tolist() # List of dates
+aidatelist = pd.date_range(start='12/17/2020', end='12/31/2020', tz=None).tolist()
 oldlist= pd.date_range(start='04/23/2020', end='04/28/2020', tz=None).tolist()
 
 
@@ -253,7 +253,7 @@ figAI.add_trace(go.Bar(name='Daily infected', x=datelist, y=cc),1,1)
 figAI.add_trace(go.Scatter(x=datelist, y=cc,
                     mode='lines+markers',
                     name='Текущий тренд'),1,1)
-figAI.add_trace(go.Scatter(x=aidatelist,  y=predicted_cases[0:5], #y=old, 
+figAI.add_trace(go.Scatter(x=aidatelist,  y=predicted_cases[0:15], #y=old, 
                     mode='lines+markers',
                     name='Будущий тренд'),1,1)
 figAI.add_trace(go.Scatter(x=oldlist,  y=old[0:5], #y=old, 
@@ -278,7 +278,7 @@ fig10.add_trace(go.Scatter(x=datelist, y=active,
 
 
 
-fig = px.bar(df, x=datelist, y=d[4:], title='Рост количества заражений по датам на 09/15/20',
+fig = px.bar(df, x=datelist, y=d[4:], title='Рост количества заражений по датам на 12/16/20',
              labels={ # replaces default labels by column name
                 "x": "Date",  "y": "Numder of Cases"
             }, template="plotly_dark")
@@ -291,7 +291,7 @@ fig.add_trace(go.Scatter(x=datelist, y=d[4:],
 for i in deathdata.columns:
     for value in deathdata.values:
         d=value
-fig4 = px.bar(deathdata, x=datelist, y=d[4:], title='Рост количества смертей по датам на 09/27/20',
+fig4 = px.bar(deathdata, x=datelist, y=d[4:], title='Рост количества смертей по датам на 12/16/20',
              labels={ # replaces default labels by column name
                 "x": "Date",  "y": "Numder of Cases"
             }, template="plotly_dark")
