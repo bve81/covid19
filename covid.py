@@ -32,7 +32,7 @@ recoverydata=pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVI
 recoverydata.columns=[column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata=pd.read_csv('city.csv')
-currentdate = '12_15_20'
+currentdate = '12_17_20'
 old=[ 5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 #-----------------------------------focus on Russia
 df=df.query('Country_Region == "Russia"')
@@ -47,7 +47,7 @@ labels=['Умерло','Вылечилось'] #labels for pie chart
 labelst=['Активных']
 #-----------------------------------Value from tables
 
-for value in deathdata['12_14_20']:
+for value in deathdata['12_16_20']:
     dd=value
 for value in deathdata[currentdate]:
     d1=value
@@ -219,7 +219,7 @@ fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
-datelist = pd.date_range(start='1/22/2020', end='12/15/2020', tz=None).tolist() # List of dates
+datelist = pd.date_range(start='1/22/2020', end='12/17/2020', tz=None).tolist() # List of dates
 aidatelist = pd.date_range(start='12/17/2020', end='12/31/2020', tz=None).tolist()
 oldlist= pd.date_range(start='04/23/2020', end='04/28/2020', tz=None).tolist()
 
@@ -278,7 +278,7 @@ fig10.add_trace(go.Scatter(x=datelist, y=active,
 
 
 
-fig = px.bar(df, x=datelist, y=d[4:], title='Рост количества заражений по датам на 12/16/20',
+fig = px.bar(df, x=datelist, y=d[4:], title='Рост количества заражений по датам на 12/17/20',
              labels={ # replaces default labels by column name
                 "x": "Date",  "y": "Numder of Cases"
             }, template="plotly_dark")
@@ -291,7 +291,7 @@ fig.add_trace(go.Scatter(x=datelist, y=d[4:],
 for i in deathdata.columns:
     for value in deathdata.values:
         d=value
-fig4 = px.bar(deathdata, x=datelist, y=d[4:], title='Рост количества смертей по датам на 12/16/20',
+fig4 = px.bar(deathdata, x=datelist, y=d[4:], title='Рост количества смертей по датам на 12/17/20',
              labels={ # replaces default labels by column name
                 "x": "Date",  "y": "Numder of Cases"
             }, template="plotly_dark")
