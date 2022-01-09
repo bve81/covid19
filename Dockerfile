@@ -8,10 +8,14 @@ WORKDIR /code
 COPY requirements.txt .
 
 # install dependencies
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get -y install gcc
+RUN apt-get -y install g++
 RUN pip install -r requirements.txt
 
 # copy the content of the local src directory to the working directory
 COPY ./ .
 
 # command to run on container start
-CMD [ "python", "./covid.py" ]
+#CMD [ "python", "./covid.py" ]
