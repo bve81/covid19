@@ -9,9 +9,16 @@ from plotly.subplots import make_subplots
 from etna.datasets.tsdataset import TSDataset
 from etna.models import ProphetModel
 from etna.pipeline import Pipeline
+from datetime import datetime, timedelta
 
 pio.templates.default = "plotly_dark"
 mapbox_access_token = 'pk.eyJ1IjoiYnZlODEiLCJhIjoiY2s4c2QzeDJ6MGF4NzNlcGpmZ2pnajBpaSJ9.SqJSTzdrMoCl_upfZgC2cA'
+# __________________________________yesterday and tomorrow
+
+yesterday = (datetime.now() - timedelta(1)).strftime('%-m/%-d/%y')
+yestardaytoday = (datetime.now() - timedelta(1)).strftime('%-m_%-d_%y')
+now = (datetime.now()).strftime('%-m/%-d/%y') # dates for AI forecast
+nextweek = (datetime.now() + timedelta(7)).strftime('%-m/%-d/%y') # dates for AI forecast
 
 # ----------------------------------data load from source to pandas
 df = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data'
@@ -27,7 +34,7 @@ recoverydata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/CO
 recoverydata.columns = [column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata = pd.read_csv('city.csv')
-currentdate = '1_9_22'
+currentdate = yestardaytoday
 old = [5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 # -----------------------------------focus on Russia
 df = df.query('Country_Region == "Russia"')
@@ -41,7 +48,7 @@ fig2.update_traces(textposition='inside', textinfo='value+label')
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
 
 labelst = ['Активных']
-datelist = pd.date_range(start='1/22/2020', end='1/9/2022', tz=None).tolist()  # List of dates
+datelist = pd.date_range(start='1/22/2020', end=yesterday, tz=None).tolist()  # List of dates
 # -----------------------------------Value from tables
 
 for value in deathdata['1_8_22']:
@@ -112,7 +119,7 @@ fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
-aidatelist = pd.date_range(start='01/10/2022', end='01/17/2022', tz=None).tolist()
+aidatelist = pd.date_range(start=now, end=nextweek, tz=None).tolist()
 oldlist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
 
 # -------------------------Bar charts
