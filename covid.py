@@ -97,6 +97,7 @@ pipeline.fit(ts)
 # Make the forecast
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten=True)
+print(dfs)
 
 # ________________________________________________________________
 recvsdead = [d1, d2]  # Values for Pie charts
@@ -111,7 +112,7 @@ fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
 fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
 
-aidatelist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
+aidatelist = pd.date_range(start='01/10/2022', end='01/17/2022', tz=None).tolist()
 oldlist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
 
 # -------------------------Bar charts
