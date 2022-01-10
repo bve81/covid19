@@ -27,7 +27,7 @@ recoverydata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/CO
 recoverydata.columns = [column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata = pd.read_csv('city.csv')
-currentdate = '1_8_22'
+currentdate = '1_9_22'
 old = [5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
 # -----------------------------------focus on Russia
 df = df.query('Country_Region == "Russia"')
@@ -41,7 +41,7 @@ fig2.update_traces(textposition='inside', textinfo='value+label')
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
 
 labelst = ['Активных']
-datelist = pd.date_range(start='1/22/2020', end='1/8/2022', tz=None).tolist()  # List of dates
+datelist = pd.date_range(start='1/22/2020', end='1/9/2022', tz=None).tolist()  # List of dates
 # -----------------------------------Value from tables
 
 for value in deathdata['1_8_22']:
@@ -75,11 +75,11 @@ for i in df2.columns:
 # Read the data
 dataAI = {'dates': datelist, 'values': cc}
 original_df = pd.DataFrame(data=dataAI)
-original_df["timestamp"] = pd.to_datetime(original_df["dates"])
-print(original_df["timestamp"])
-original_df["target"] = original_df["values"]
-original_df.drop(columns=["dates", "values"], inplace=True)
-original_df["segment"] = "main"
+original_df[ "timestamp" ] = pd.to_datetime(original_df[ "dates" ])
+print(original_df[ "timestamp" ])
+original_df[ "target" ] = original_df[ "values" ]
+original_df.drop(columns=[ "dates", "values" ], inplace=True)
+original_df[ "segment" ] = "main"
 original_df.head()
 
 
