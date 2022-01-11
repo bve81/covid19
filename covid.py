@@ -17,6 +17,8 @@ mapbox_access_token = 'pk.eyJ1IjoiYnZlODEiLCJhIjoiY2s4c2QzeDJ6MGF4NzNlcGpmZ2pnaj
 
 yesterday = (datetime.now() - timedelta(1)).strftime('%-m/%-d/%y')
 yestardaytoday = (datetime.now() - timedelta(1)).strftime('%-m_%-d_%y')
+daysbefore = (datetime.now() - timedelta(2)).strftime('%-m_%-d_%y')
+recoverydates = (datetime.now() - timedelta(2)).strftime('%Y-%m-%d')
 now = (datetime.now()).strftime('%-m/%-d/%y') # dates for AI forecast
 nextweek = (datetime.now() + timedelta(7)).strftime('%-m/%-d/%y') # dates for AI forecast
 
@@ -29,40 +31,40 @@ deathdata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID
                         r'/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
 deathdata.columns = [column.replace("/", "_") for column in deathdata.columns]
 
-recoverydata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data'
-                           r'/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
-recoverydata.columns = [column.replace("/", "_") for column in recoverydata.columns]
+peoplerecovered = pd.read_csv(r'https://covid.observer/ru/ru-covid.observer.csv?2022-01-10')
+peoplerecovered  = peoplerecovered.query('Date == @recoverydates')
+
+# recoverydata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data'
+#                            r'/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
+# recoverydata.columns = [column.replace("/", "_") for column in recoverydata.columns]
 
 mapdata = pd.read_csv('city.csv')
 currentdate = yestardaytoday
-old = [5957.43108261, 6008.36468315, 6248.52659261, 6690.37627876, 7334.75013578]
+
 # -----------------------------------focus on Russia
 df = df.query('Country_Region == "Russia"')
 deathdata = deathdata.query('Country_Region == "Russia"')
-recoverydata = recoverydata.query('Country_Region == "Russia"')
+# recoverydata = recoverydata.query('Country_Region == "Russia"')
 # -----------------------------------Pie charts
-fig2 = px.pie(df, values=currentdate, names='Country_Region', title='Количество заражений на 01/09/22',
+titles=f"Количество заражений на {yesterday}"
+fig2 = px.pie(df, values=currentdate, names='Country_Region', title=titles,
               template="plotly_dark")
 fig2.update_traces(textposition='inside', textinfo='value+label')
 
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
-
 labelst = ['Активных']
+
 datelist = pd.date_range(start='1/22/2020', end=yesterday, tz=None).tolist()  # List of dates
 # -----------------------------------Value from tables
 
-for value in deathdata['1_8_22']:
+for value in deathdata[daysbefore]:
     dd = value
 for value in deathdata[currentdate]:
     d1 = value
-for value in recoverydata[currentdate]:
-    d2 = value
+d2 = peoplerecovered["Recovered cases"]
 for value in df[currentdate]:
     d3 = value
-recoverydata2 = recoverydata.loc[:, '1_22_20': currentdate]
-for i in recoverydata2.columns:
-    for value in recoverydata2.values:
-        rc = value
+
 deathdata2 = deathdata.loc[:, '1_22_20': currentdate]
 for i in deathdata2.columns:
     for value in deathdata2.values:
@@ -71,7 +73,9 @@ for i in deathdata2.columns:
 for i in df.columns:
     for value in df.values:
         d = value
-active = d[4:] - rc - dt
+
+active = peoplerecovered["Confirmed cases"] - peoplerecovered["Recovered cases"] - peoplerecovered["Fatal cases"]
+print(active)
 
 df2 = df.loc[:, '1_22_20': currentdate].diff(axis=1)
 for i in df2.columns:
@@ -107,17 +111,18 @@ dfs = forecast_ts.to_pandas(flatten=True)
 print(dfs)
 
 # ________________________________________________________________
-recvsdead = [d1, d2]  # Values for Pie charts
-overall = [d3 - d2 - d1]  # Values for Pie charts
-print(overall)
+recvsdead = [d1, d2[0]]  # Values for Pie charts
+overall = active  # Values for Pie charts
+
 # -----------------------Pie charts
+
 fig3 = go.Figure(data=[go.Pie(labels=labels, values=recvsdead)])
 fig3.update_traces(textposition='inside', textinfo='value+label')
 fig3.update_layout(title_text="Количество умерших vs вылечившихся")
 
 fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
 fig5.update_traces(textposition='inside', textinfo='value+label')
-fig5.update_layout(title_text="Количество заражений - умерших/вылечившихся")
+fig5.update_layout(title_text="Количество заражений за вычетом умерших и вылечившихся")
 
 aidatelist = pd.date_range(start=now, end=nextweek, tz=None).tolist()
 oldlist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
@@ -125,38 +130,35 @@ oldlist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
 # -------------------------Bar charts
 
 
-fig9 = make_subplots(rows=1, cols=2, specs=[[{}, {}]], shared_xaxes=True,
-                     shared_yaxes=False, vertical_spacing=0.001)
+fig9 = make_subplots (rows = 1, cols = 2, specs = [ [ {}, {} ] ], shared_xaxes = True,
+                      shared_yaxes = False, vertical_spacing = 0.001)
 
-fig9.add_trace(go.Bar(name='Total infected', x=datelist, y=d[4:]), 1, 1)
-fig9.add_trace(go.Bar(name='Daily infected', x=datelist, y=cc), 1, 2)
+fig9.add_trace (go.Bar (name = 'Total infected', x = datelist, y = d[ 4: ]), 1, 1)
+fig9.add_trace (go.Bar (name = 'Daily infected', x = datelist, y = cc), 1, 2)
 # Change the bar mode
-fig9.update_layout(barmode='stack')
-fig9.update_layout(title_text='Количество инфицированных за день vs общее количество инфицированных')
-fig9.add_trace(go.Scatter(x=datelist, y=d[4:],
-                          mode='lines+markers',
-                          name='Текущий тренд'), 1, 1)
-fig9.add_trace(go.Scatter(x=datelist, y=cc,
-                          mode='lines+markers',
-                          name='Текущий тренд'), 1, 2)
-figAI = make_subplots(rows=1, cols=1, specs=[[{}]], shared_xaxes=True,
-                      shared_yaxes=False, vertical_spacing=0.001)
+fig9.update_layout (barmode = 'stack')
+fig9.update_layout (title_text = 'Количество инфицированных за день vs общее количество инфицированных')
+fig9.add_trace (go.Scatter (x = datelist, y = d[ 4: ],
+                            mode = 'lines+markers',
+                            name = 'Текущий тренд'), 1, 1)
+fig9.add_trace (go.Scatter (x = datelist, y = cc,
+                            mode = 'lines+markers',
+                            name = 'Текущий тренд'), 1, 2)
+figAI = make_subplots (rows = 1, cols = 1, specs = [ [ {} ] ], shared_xaxes = True,
+                       shared_yaxes = False, vertical_spacing = 0.001)
 #
-figAI.add_trace(go.Bar(name='Daily infected', x=datelist, y=cc), 1, 1)
-figAI.add_trace(go.Scatter(x=datelist, y=cc,
-                           mode='lines+markers',
-                           name='Текущий тренд'), 1, 1)
-figAI.add_trace(go.Scatter(x=aidatelist, y=dfs["target"],  # y=old,
-                           mode='lines+markers',
-                           name='Будущий тренд'), 1, 1)
-# figAI.add_trace(go.Scatter(x=oldlist,  y=old[0:5], #y=old,
-#                     mode='lines+markers',
-#                     name='Прошлый прогноз'),1,1)
+figAI.add_trace (go.Bar (name = 'Daily infected', x = datelist, y = cc), 1, 1)
+figAI.add_trace (go.Scatter (x = datelist, y = cc,
+                             mode = 'lines+markers',
+                             name = 'Текущий тренд'), 1, 1)
+figAI.add_trace (go.Scatter (x = aidatelist, y = dfs[ "target" ],  # y=old,
+                             mode = 'lines+markers',
+                             name = 'Будущий тренд'), 1, 1)
 
 
 fig10 = go.Figure(data=[
     go.Bar(name='Total infected', x=datelist, y=d[4:], width=[15], text=d[4:], textposition='auto'),
-    #  go.Bar(name='Total infected - (cure/dead)', x=datelist, y=active, width=[15], text=active, textposition='auto')
+    go.Bar(name='Total infected - (cure/dead)', x=datelist, y=active, width=[15], text=active, textposition='auto')
 ])
 # Change the bar mode
 fig10.update_layout(barmode='group')
@@ -164,11 +166,11 @@ fig10.update_layout(title_text='Общее количество заражени
 fig10.add_trace(go.Scatter(x=datelist, y=d[4:],
                            mode='lines+markers',
                            name='Текущий тренд'))
-# fig10.add_trace(go.Scatter(x=datelist, y=active,
-#                            mode='lines+markers',
-#                            name='Текущий тренд'))
+fig10.add_trace(go.Scatter(x=datelist, y=active,
+                           mode='lines+markers',
+                           name='Текущий тренд'))
 
-fig = px.bar(df, x=datelist, y=d[4:], title='Рост количества заражений по датам на 01/09/22',
+fig = px.bar(df, x=datelist, y=d[4:], title=f'Рост количества заражений по датам на {yesterday}',
              labels={  # replaces default labels by column name
                  "x": "Date", "y": "Numder of Cases"
              }, template="plotly_dark")
@@ -180,7 +182,7 @@ fig.add_trace(go.Scatter(x=datelist, y=d[4:],
 for i in deathdata.columns:
     for value in deathdata.values:
         d = value
-fig4 = px.bar(deathdata, x=datelist, y=d[4:], title='Рост количества смертей по датам на 01/09/22',
+fig4 = px.bar(deathdata, x=datelist, y=d[4:], title=f'Рост количества смертей по датам на {yesterday}',
               labels={  # replaces default labels by column name
                   "x": "Date", "y": "Numder of Cases"
               }, template="plotly_dark")
