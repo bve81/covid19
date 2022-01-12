@@ -18,9 +18,9 @@ mapbox_access_token = 'pk.eyJ1IjoiYnZlODEiLCJhIjoiY2s4c2QzeDJ6MGF4NzNlcGpmZ2pnaj
 yesterday = (datetime.now() - timedelta(1)).strftime('%-m/%-d/%y')
 yestardaytoday = (datetime.now() - timedelta(1)).strftime('%-m_%-d_%y')
 daysbefore = (datetime.now() - timedelta(2)).strftime('%-m_%-d_%y')
-recoverydates = (datetime.now() - timedelta(3)).strftime('%Y-%m-%d')
-now = (datetime.now()).strftime('%-m/%-d/%y') # dates for AI forecast
-nextweek = (datetime.now() + timedelta(7)).strftime('%-m/%-d/%y') # dates for AI forecast
+recoverydates = (datetime.now() - timedelta(1)).strftime('%Y-%m-%d')
+now = (datetime.now()).strftime('%-m/%-d/%y')  # dates for AI forecast
+nextweek = (datetime.now() + timedelta(7)).strftime('%-m/%-d/%y')  # dates for AI forecast
 
 # ----------------------------------data load from source to pandas
 df = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data'
@@ -31,7 +31,7 @@ deathdata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID
                         r'/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
 deathdata.columns = [column.replace("/", "_") for column in deathdata.columns]
 
-peoplerecovered = pd.read_csv(r'https://covid.observer/ru/ru-covid.observer.csv?2022-01-10')
+peoplerecovered = pd.read_csv(r'https://covid.observer/ru/ru-covid.observer.csv?2022-01-12')
 print(peoplerecovered)
 peoplerecovered = peoplerecovered.query('Date == @recoverydates')
 
@@ -47,15 +47,15 @@ df = df.query('Country_Region == "Russia"')
 deathdata = deathdata.query('Country_Region == "Russia"')
 # recoverydata = recoverydata.query('Country_Region == "Russia"')
 # -----------------------------------Pie charts
-titles=f"Количество заражений на {yesterday}"
-fig2 = px.pie(df, values=currentdate, names='Country_Region', title=titles,
-              template="ggplot2")
-fig2.update_traces(textposition='inside', textinfo='value+label')
+titles = f"Количество заражений на {yesterday}"
+fig2 = px.pie(df, values = currentdate, names = 'Country_Region', title = titles,
+              template = "ggplot2")
+fig2.update_traces(textposition = 'inside', textinfo = 'value+label')
 
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
 labelst = ['Активных']
 
-datelist = pd.date_range(start='1/22/2020', end=yesterday, tz=None).tolist()  # List of dates
+datelist = pd.date_range(start = '1/22/2020', end = yesterday, tz = None).tolist()  # List of dates
 # -----------------------------------Value from tables
 
 for value in deathdata[daysbefore]:
@@ -77,121 +77,119 @@ for i in df.columns:
 
 active = peoplerecovered["Confirmed cases"] - peoplerecovered["Recovered cases"] - peoplerecovered["Fatal cases"]
 
-
-df2 = df.loc[:, '1_22_20': currentdate].diff(axis=1)
+df2 = df.loc[:, '1_22_20': currentdate].diff(axis = 1)
 for i in df2.columns:
     for value in df2.values:
         cc = value
 
 # AI etna Forecast
 # Read the data
-dataAI = {'dates': datelist, 'values': cc}
-original_df = pd.DataFrame(data=dataAI)
-original_df[ "timestamp" ] = pd.to_datetime(original_df[ "dates" ])
-print(original_df[ "timestamp" ])
-original_df[ "target" ] = original_df[ "values" ]
-original_df.drop(columns=[ "dates", "values" ], inplace=True)
-original_df[ "segment" ] = "main"
+dataAI = { 'dates': datelist, 'values': cc }
+original_df = pd.DataFrame(data = dataAI)
+original_df["timestamp"] = pd.to_datetime(original_df["dates"])
+print(original_df["timestamp"])
+original_df["target"] = original_df["values"]
+original_df.drop(columns = ["dates", "values"], inplace = True)
+original_df["segment"] = "main"
 original_df.head()
-
 
 # Create a TSDataset
 df = TSDataset.to_dataset(original_df)
-ts = TSDataset(df, freq="D")
+ts = TSDataset(df, freq = "D")
 
 # Choose a horizon
 HORIZON = 8
 
 # Fit the pipeline
-pipeline = Pipeline(model=ProphetModel(yearly_seasonality=True, daily_seasonality=True), horizon=HORIZON)
+pipeline = Pipeline(model = ProphetModel(yearly_seasonality = True, daily_seasonality = True), horizon = HORIZON)
 pipeline.fit(ts)
 
 # Make the forecast
 forecast_ts = pipeline.forecast()
-dfs = forecast_ts.to_pandas(flatten=True)
+dfs = forecast_ts.to_pandas(flatten = True)
 print(dfs)
 
 # ________________________________________________________________
-recvsdead = [d1, d2[0]]  # Values for Pie charts
+recvsdead = [d1, d2[1]]  # Values for Pie charts
 overall = active  # Values for Pie charts
 
 # -----------------------Pie charts
 
-fig3 = go.Figure(data=[go.Pie(labels=labels, values=recvsdead)])
-fig3.update_traces(textposition='inside', textinfo='value+label')
-fig3.update_layout(title_text="Количество умерших vs вылечившихся")
+fig3 = go.Figure(data = [go.Pie(labels = labels, values = recvsdead)])
+fig3.update_traces(textposition = 'inside', textinfo = 'value+label')
+fig3.update_layout(title_text = "Количество умерших vs вылечившихся")
 
-fig5 = go.Figure(data=[go.Pie(labels=labelst, values=overall)])
-fig5.update_traces(textposition='inside', textinfo='value+label')
-fig5.update_layout(title_text="Количество заражений за вычетом умерших и вылечившихся")
+fig5 = go.Figure(data = [go.Pie(labels = labelst, values = overall)])
+fig5.update_traces(textposition = 'inside', textinfo = 'value+label')
+fig5.update_layout(title_text = "Количество заражений за вычетом умерших и вылечившихся")
 
-aidatelist = pd.date_range(start=now, end=nextweek, tz=None).tolist()
-oldlist = pd.date_range(start='01/09/2022', end='01/16/2022', tz=None).tolist()
+aidatelist = pd.date_range(start = now, end = nextweek, tz = None).tolist()
+oldlist = pd.date_range(start = '01/09/2022', end = '01/16/2022', tz = None).tolist()
 
 # -------------------------Bar charts
 
 
-fig9 = make_subplots (rows = 1, cols = 2, specs = [ [ {}, {} ] ], shared_xaxes = True,
-                      shared_yaxes = False, vertical_spacing = 0.001)
+fig9 = make_subplots(rows = 1, cols = 2, specs = [[{ }, { }]], shared_xaxes = True,
+                     shared_yaxes = False, vertical_spacing = 0.001)
 
-fig9.add_trace (go.Bar (name = 'Total infected', x = datelist, y = d[ 4: ]), 1, 1)
-fig9.add_trace (go.Bar (name = 'Daily infected', x = datelist, y = cc), 1, 2)
+fig9.add_trace(go.Bar(name = 'Total infected', x = datelist, y = d[4:]), 1, 1)
+fig9.add_trace(go.Bar(name = 'Daily infected', x = datelist, y = cc), 1, 2)
 # Change the bar mode
-fig9.update_layout (barmode = 'stack')
-fig9.update_layout (title_text = 'Количество инфицированных за день vs общее количество инфицированных')
-fig9.add_trace (go.Scatter (x = datelist, y = d[ 4: ],
-                            mode = 'lines+markers',
-                            name = 'Текущий тренд'), 1, 1)
-fig9.add_trace (go.Scatter (x = datelist, y = cc,
-                            mode = 'lines+markers',
-                            name = 'Текущий тренд'), 1, 2)
-figAI = make_subplots (rows = 1, cols = 1, specs = [ [ {} ] ], shared_xaxes = True,
-                       shared_yaxes = False, vertical_spacing = 0.001)
+fig9.update_layout(barmode = 'stack')
+fig9.update_layout(title_text = 'Количество инфицированных за день vs общее количество инфицированных')
+fig9.add_trace(go.Scatter(x = datelist, y = d[4:],
+                          mode = 'lines+markers',
+                          name = 'Текущий тренд'), 1, 1)
+fig9.add_trace(go.Scatter(x = datelist, y = cc,
+                          mode = 'lines+markers',
+                          name = 'Текущий тренд'), 1, 2)
+figAI = make_subplots(rows = 1, cols = 1, specs = [[{ }]], shared_xaxes = True,
+                      shared_yaxes = False, vertical_spacing = 0.001)
 #
-figAI.add_trace (go.Bar (name = 'Daily infected', x = datelist, y = cc), 1, 1)
-figAI.add_trace (go.Scatter (x = datelist, y = cc,
-                             mode = 'lines+markers',
-                             name = 'Текущий тренд'), 1, 1)
-figAI.add_trace (go.Scatter (x = aidatelist, y = dfs[ "target" ],  # y=old,
-                             mode = 'lines+markers',
-                             name = 'Будущий тренд'), 1, 1)
+figAI.add_trace(go.Bar(name = 'Daily infected', x = datelist, y = cc), 1, 1)
+figAI.add_trace(go.Scatter(x = datelist, y = cc,
+                           mode = 'lines+markers',
+                           name = 'Текущий тренд'), 1, 1)
+figAI.add_trace(go.Scatter(x = aidatelist, y = dfs["target"],  # y=old,
+                           mode = 'lines+markers',
+                           name = 'Будущий тренд'), 1, 1)
 
-
-fig10 = go.Figure(data=[
-    go.Bar(name='Total infected', x=datelist, y=d[4:], width=[15], text=d[4:], textposition='auto'),
-    go.Bar(name='Total infected - (cure/dead)', x=datelist, y=active, width=[15], text=active, textposition='auto')
+fig10 = go.Figure(data = [
+    go.Bar(name = 'Total infected', x = datelist, y = d[4:], width = [15], text = d[4:], textposition = 'auto'),
+    go.Bar(name = 'Total infected - (cure/dead)', x = datelist, y = active, width = [15], text = active,
+           textposition = 'auto')
 ])
 # Change the bar mode
-fig10.update_layout(barmode='group')
-fig10.update_layout(title_text='Общее количество заражений в сравнении с активным количеством случаев')
-fig10.add_trace(go.Scatter(x=datelist, y=d[4:],
-                           mode='lines+markers',
-                           name='Текущий тренд'))
-fig10.add_trace(go.Scatter(x=datelist, y=active,
-                           mode='lines+markers',
-                           name='Текущий тренд'))
+fig10.update_layout(barmode = 'group')
+fig10.update_layout(title_text = 'Общее количество заражений в сравнении с активным количеством случаев')
+fig10.add_trace(go.Scatter(x = datelist, y = d[4:],
+                           mode = 'lines+markers',
+                           name = 'Текущий тренд'))
+fig10.add_trace(go.Scatter(x = datelist, y = active,
+                           mode = 'lines+markers',
+                           name = 'Текущий тренд'))
 
-fig = px.bar(df, x=datelist, y=d[4:], title=f'Рост количества заражений по датам на {yesterday}',
-             labels={  # replaces default labels by column name
+fig = px.bar(df, x = datelist, y = d[4:], title = f'Рост количества заражений по датам на {yesterday}',
+             labels = {  # replaces default labels by column name
                  "x": "Date", "y": "Numder of Cases"
-             }, template="ggplot2")
-fig.update_traces(showlegend=True, text=d[4:], textposition='auto', name='Кол-во заражнний')
-fig.add_trace(go.Scatter(x=datelist, y=d[4:],
-                         mode='lines+markers',
-                         name='Текущий тренд'))
+             }, template = "ggplot2")
+fig.update_traces(showlegend = True, text = d[4:], textposition = 'auto', name = 'Кол-во заражнний')
+fig.add_trace(go.Scatter(x = datelist, y = d[4:],
+                         mode = 'lines+markers',
+                         name = 'Текущий тренд'))
 
 for i in deathdata.columns:
     for value in deathdata.values:
         d = value
-fig4 = px.bar(deathdata, x=datelist, y=d[4:], title=f'Рост количества смертей по датам на {yesterday}',
-              labels={  # replaces default labels by column name
+fig4 = px.bar(deathdata, x = datelist, y = d[4:], title = f'Рост количества смертей по датам на {yesterday}',
+              labels = {  # replaces default labels by column name
                   "x": "Date", "y": "Numder of Cases"
-              }, template="ggplot2")
+              }, template = "ggplot2")
 
-fig4.update_traces(text=d[4:], textposition='auto', showlegend=True, name='Кол-во Литальных случаев')
-fig4.add_trace(go.Scatter(x=datelist, y=d[4:],
-                          mode='lines+markers',
-                          name='Тренд смертности'))
+fig4.update_traces(text = d[4:], textposition = 'auto', showlegend = True, name = 'Кол-во Литальных случаев')
+fig4.add_trace(go.Scatter(x = datelist, y = d[4:],
+                          mode = 'lines+markers',
+                          name = 'Тренд смертности'))
 
 # -----------------------------Map charts
 # set the geo=spatial data
@@ -199,48 +197,48 @@ customestyle = 'mapbox://styles/bve81/ck8sikbwc27k61int0unl4xre'
 token = "pk.eyJ1IjoiYnZlODEiLCJhIjoiY2s4c2QzeDJ6MGF4NzNlcGpmZ2pnajBpaSJ9.SqJSTzdrMoCl_upfZgC2cA"
 # set the layout to plot
 
-fig6 = px.scatter_mapbox(mapdata, lat='lat', lon='lon', size='cure',
-                         color_discrete_sequence=["fuchsia"], zoom=3, height=300)
-fig6.update_layout(mapbox_style=customestyle, mapbox_accesstoken=token)
-fig6.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+fig6 = px.scatter_mapbox(mapdata, lat = 'lat', lon = 'lon', size = 'cure',
+                         color_discrete_sequence = ["fuchsia"], zoom = 3, height = 300)
+fig6.update_layout(mapbox_style = customestyle, mapbox_accesstoken = token)
+fig6.update_layout(margin = { "r": 0, "t": 0, "l": 0, "b": 0 })
 
 # -----------------------------Tables
 dt = d1 - dd
 delta = [dd, d1, dt]
 
-fig7 = go.Figure(data=[go.Table(header=dict(values=['Статистистика Вчера', 'Статистистика Сегодня', 'Умерло за сутки']),
-                                cells=dict(values=delta))
-                       ])
-fig7.update_layout(title_text='Умерло за сутки')
+fig7 = go.Figure(
+    data = [go.Table(header = dict(values = ['Статистистика Вчера', 'Статистистика Сегодня', 'Умерло за сутки']),
+                     cells = dict(values = delta))
+            ])
+fig7.update_layout(title_text = 'Умерло за сутки')
 
 # -----------------------------Dash parts
 app = dash.Dash()
 app.layout = html.Div([
     html.H1('Статистика по COVID19 Россия, данные из Johns Hopkins CSSE '),
     html.Div([
-        dcc.Graph(id='cases', figure=fig2)]),
+        dcc.Graph(id = 'cases', figure = fig2)]),
     html.Div([
-        dcc.Graph(id='Total case vs day', figure=fig9)]),
+        dcc.Graph(id = 'Total case vs day', figure = fig9)]),
     html.Div([
-        dcc.Graph(id='Daily cases AI forecast', figure=figAI)]),
+        dcc.Graph(id = 'Daily cases AI forecast', figure = figAI)]),
     html.Div([
-        dcc.Graph(id='Active vs total', figure=fig10)]),
+        dcc.Graph(id = 'Active vs total', figure = fig10)]),
     html.Div([
-        dcc.Graph(id='cases by date ', figure=fig)]),
+        dcc.Graph(id = 'cases by date ', figure = fig)]),
     html.Div([
-        dcc.Graph(id='Total death trend', figure=fig4)]),
+        dcc.Graph(id = 'Total death trend', figure = fig4)]),
     html.Div([
-        dcc.Graph(id='Total death vs cure vs total ', figure=fig5)]),
+        dcc.Graph(id = 'Total death vs cure vs total ', figure = fig5)]),
 
     html.Div([
-        dcc.Graph(id='delta for day ', figure=fig7)]),
+        dcc.Graph(id = 'delta for day ', figure = fig7)]),
     html.Div([
-        dcc.Graph(id='Total death ', figure=fig3)]),
-
+        dcc.Graph(id = 'Total death ', figure = fig3)]),
 
     html.Div([
-        dcc.Graph(id='Total death Map', figure=fig6)]),
+        dcc.Graph(id = 'Total death Map', figure = fig6)]),
 
 ])
 
-app.run_server(debug=True, use_reloader=False, host='0.0.0.0', )  #
+app.run_server(debug = True, use_reloader = False, host = '0.0.0.0', )  #
