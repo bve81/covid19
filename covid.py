@@ -11,14 +11,14 @@ from etna.models import ProphetModel
 from etna.pipeline import Pipeline
 from datetime import datetime, timedelta
 
-pio.templates.default = "plotly_dark"
+pio.templates.default = "ggplot2"
 mapbox_access_token = 'pk.eyJ1IjoiYnZlODEiLCJhIjoiY2s4c2QzeDJ6MGF4NzNlcGpmZ2pnajBpaSJ9.SqJSTzdrMoCl_upfZgC2cA'
 # __________________________________yesterday and tomorrow
 
 yesterday = (datetime.now() - timedelta(1)).strftime('%-m/%-d/%y')
 yestardaytoday = (datetime.now() - timedelta(1)).strftime('%-m_%-d_%y')
 daysbefore = (datetime.now() - timedelta(2)).strftime('%-m_%-d_%y')
-recoverydates = (datetime.now() - timedelta(2)).strftime('%Y-%m-%d')
+recoverydates = (datetime.now() - timedelta(3)).strftime('%Y-%m-%d')
 now = (datetime.now()).strftime('%-m/%-d/%y') # dates for AI forecast
 nextweek = (datetime.now() + timedelta(7)).strftime('%-m/%-d/%y') # dates for AI forecast
 
@@ -32,7 +32,8 @@ deathdata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID
 deathdata.columns = [column.replace("/", "_") for column in deathdata.columns]
 
 peoplerecovered = pd.read_csv(r'https://covid.observer/ru/ru-covid.observer.csv?2022-01-10')
-peoplerecovered  = peoplerecovered.query('Date == @recoverydates')
+print(peoplerecovered)
+peoplerecovered = peoplerecovered.query('Date == @recoverydates')
 
 # recoverydata = pd.read_csv(r'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data'
 #                            r'/csse_covid_19_time_series/time_series_covid19_recovered_global.csv')
@@ -48,7 +49,7 @@ deathdata = deathdata.query('Country_Region == "Russia"')
 # -----------------------------------Pie charts
 titles=f"Количество заражений на {yesterday}"
 fig2 = px.pie(df, values=currentdate, names='Country_Region', title=titles,
-              template="plotly_dark")
+              template="ggplot2")
 fig2.update_traces(textposition='inside', textinfo='value+label')
 
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
@@ -75,7 +76,7 @@ for i in df.columns:
         d = value
 
 active = peoplerecovered["Confirmed cases"] - peoplerecovered["Recovered cases"] - peoplerecovered["Fatal cases"]
-print(active)
+
 
 df2 = df.loc[:, '1_22_20': currentdate].diff(axis=1)
 for i in df2.columns:
@@ -162,7 +163,7 @@ fig10 = go.Figure(data=[
 ])
 # Change the bar mode
 fig10.update_layout(barmode='group')
-fig10.update_layout(title_text='Общее количество заражений в сравнении с активным колисеством случаев')
+fig10.update_layout(title_text='Общее количество заражений в сравнении с активным количеством случаев')
 fig10.add_trace(go.Scatter(x=datelist, y=d[4:],
                            mode='lines+markers',
                            name='Текущий тренд'))
@@ -173,7 +174,7 @@ fig10.add_trace(go.Scatter(x=datelist, y=active,
 fig = px.bar(df, x=datelist, y=d[4:], title=f'Рост количества заражений по датам на {yesterday}',
              labels={  # replaces default labels by column name
                  "x": "Date", "y": "Numder of Cases"
-             }, template="plotly_dark")
+             }, template="ggplot2")
 fig.update_traces(showlegend=True, text=d[4:], textposition='auto', name='Кол-во заражнний')
 fig.add_trace(go.Scatter(x=datelist, y=d[4:],
                          mode='lines+markers',
@@ -185,7 +186,7 @@ for i in deathdata.columns:
 fig4 = px.bar(deathdata, x=datelist, y=d[4:], title=f'Рост количества смертей по датам на {yesterday}',
               labels={  # replaces default labels by column name
                   "x": "Date", "y": "Numder of Cases"
-              }, template="plotly_dark")
+              }, template="ggplot2")
 
 fig4.update_traces(text=d[4:], textposition='auto', showlegend=True, name='Кол-во Литальных случаев')
 fig4.add_trace(go.Scatter(x=datelist, y=d[4:],
@@ -226,15 +227,16 @@ app.layout = html.Div([
         dcc.Graph(id='Active vs total', figure=fig10)]),
     html.Div([
         dcc.Graph(id='cases by date ', figure=fig)]),
-
+    html.Div([
+        dcc.Graph(id='Total death trend', figure=fig4)]),
     html.Div([
         dcc.Graph(id='Total death vs cure vs total ', figure=fig5)]),
+
     html.Div([
         dcc.Graph(id='delta for day ', figure=fig7)]),
     html.Div([
         dcc.Graph(id='Total death ', figure=fig3)]),
-    html.Div([
-        dcc.Graph(id='Total death trend', figure=fig4)]),
+
 
     html.Div([
         dcc.Graph(id='Total death Map', figure=fig6)]),
