@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import plotly.io as pio
 from dash import dcc
 from dash import html
+import dash_daq as daq
 from plotly.subplots import make_subplots
 from etna.datasets.tsdataset import TSDataset
 from etna.models import ProphetModel
@@ -51,11 +52,6 @@ if dayexcept not in df.columns:
     currentdate = daysbefore
     yesterday = (datetime.now() - timedelta(2)).strftime('%-m/%-d/%y')
 
-titles = f"Количество заражений на {yesterday}"
-fig2 = px.pie(df, values = currentdate, names = 'Country_Region', title = titles,
-              template = "ggplot2")
-fig2.update_traces(textposition = 'inside', textinfo = 'value+label')
-
 labels = ['Умерло', 'Вылечилось']  # labels for pie chart
 labelst = ['Активных']
 
@@ -74,6 +70,7 @@ for value in deathdata[currentdate]:
 d2 = peoplerecovered["Recovered cases"]
 for value in df[currentdate]:
     d3 = value
+    print(d3)
 
 deathdata2 = deathdata.loc[:, '1_22_20': currentdate]
 for i in deathdata2.columns:
@@ -98,6 +95,14 @@ for i in df3.columns:
         ccAI = value
 # AI etna Forecast
 # Read the data
+hld = pd.DataFrame({
+      'holiday': 'newyear',
+      'ds': pd.to_datetime(['2021-01-01', '2021-01-02', '2021-01-03', '2021-01-04', '2021-01-05', '2021-12-31', '2022-01-01',
+                            '2022-01-02','2022-01-03','2022-01-04','2022-01-05','2022-01-06',
+                            '2022-01-07','2022-01-08','2022-01-09']),
+      'lower_window': -3,
+      'upper_window': 2,
+    })
 dataAI = { 'dates': datelist, 'values': cc }
 original_df = pd.DataFrame(data = dataAI)
 original_df["timestamp"] = pd.to_datetime(original_df["dates"])
@@ -114,9 +119,12 @@ ts = TSDataset(df, freq = "D")
 HORIZON = 8
 
 # Fit the pipeline
-pipeline = Pipeline(model = ProphetModel(yearly_seasonality = True, daily_seasonality = True), horizon = HORIZON)
+pipeline = Pipeline(model = ProphetModel(yearly_seasonality=True, weekly_seasonality=True,
+                                         daily_seasonality = True, seasonality_mode='multiplicative', seasonality_prior_scale=10.0,
+                                         holidays = hld, holidays_prior_scale=10.0,
+                                         ), horizon = HORIZON)
 pipeline.fit(ts)
-
+#changepoints=['2022-01-10'], changepoint_range=0.2
 # Make the forecast
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten = True)
@@ -224,8 +232,16 @@ fig7.update_layout(title_text = 'Умерло за сутки')
 app = dash.Dash()
 app.layout = html.Div([
     html.H1('Статистика по COVID19 Россия, данные из Johns Hopkins CSSE '),
-    html.Div([
-        dcc.Graph(id = 'cases', figure = fig2)]),
+    daq.LEDDisplay(
+                    id='digital',
+                    label=f"Количество заражений на {yesterday}",
+                   # labelPosition = 'bottom',
+                    value=d3, #not sure what to put here
+                    size=64,
+                    color="#FF5E5E"
+                    ),
+
+
     html.Div([
         dcc.Graph(id = 'Total case vs day', figure = fig9)]),
 

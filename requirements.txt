@@ -10,6 +10,7 @@ etna[all]
 pandas
 plotly
 dash
+dash-daq
 scipy
 statsmodels
 sklearn
