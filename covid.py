@@ -83,6 +83,7 @@ for i in df.columns:
 
 
 active = ddd["Confirmed cases"] - ddd["Recovered cases"] - ddd["Fatal cases"]
+lastval=active.iloc[-1]
 
 
 df2 = df.loc[:, '1_22_20': currentdate].diff(axis = 1)
@@ -119,12 +120,12 @@ ts = TSDataset(df, freq = "D")
 HORIZON = 8
 
 # Fit the pipeline
-pipeline = Pipeline(model = ProphetModel(yearly_seasonality=True, weekly_seasonality=True,
-                                         daily_seasonality = True, seasonality_mode='multiplicative', seasonality_prior_scale=10.0,
-                                         holidays = hld, holidays_prior_scale=10.0,
+pipeline = Pipeline(model = ProphetModel(
+                                          changepoints=['2022-01-10'], changepoint_range=0.2,
+                                          holidays = hld, holidays_prior_scale=10.0,
                                          ), horizon = HORIZON)
 pipeline.fit(ts)
-#changepoints=['2022-01-10'], changepoint_range=0.2
+#changepoints=['2022-01-10'], changepoint_range=0.2 daily_seasonality = True, seasonality_mode='multiplicative',yearly_seasonality=True, seasonality_prior_scale=10.0,
 # Make the forecast
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten = True)
@@ -140,9 +141,6 @@ fig3 = go.Figure(data = [go.Pie(labels = labels, values = recvsdead)])
 fig3.update_traces(textposition = 'inside', textinfo = 'value+label')
 fig3.update_layout(title_text = "Количество умерших vs вылечившихся")
 
-fig5 = go.Figure(data = [go.Pie(labels = labelst, values = active[::-1])])
-fig5.update_traces(textposition = 'inside', textinfo = 'value+label')
-fig5.update_layout(title_text = "Количество заражений за вычетом умерших и вылечившихся")
 
 aidatelist = pd.date_range(start = now, end = nextweek, tz = None).tolist()
 
@@ -232,16 +230,20 @@ fig7.update_layout(title_text = 'Умерло за сутки')
 app = dash.Dash()
 app.layout = html.Div([
     html.H1('Статистика по COVID19 Россия, данные из Johns Hopkins CSSE '),
-    daq.LEDDisplay(
-                    id='digital',
-                    label=f"Количество заражений на {yesterday}",
-                   # labelPosition = 'bottom',
-                    value=d3, #not sure what to put here
-                    size=64,
-                    color="#FF5E5E"
-                    ),
 
 
+
+    html.Div([
+        html.H2(f"Количество заражений на {yesterday}", style={'text-align':'center'}),
+        daq.LEDDisplay(
+            id = 'digital',
+            #label = f"Количество заражений на {yesterday}",
+            style = { "fontSize": 40,'text-align':'center' },
+            # labelPosition = 'bottom',
+            value = d3,  # not sure what to put here
+            size = 64,
+            color = "#FF5E5E"
+        )]),
     html.Div([
         dcc.Graph(id = 'Total case vs day', figure = fig9)]),
 
@@ -254,8 +256,16 @@ app.layout = html.Div([
     html.Div([
         dcc.Graph(id = 'Total case vs day2', figure = figDD)]),
     html.Div([
-        dcc.Graph(id = 'Total death vs cure vs total ', figure = fig5)]),
-
+        html.H2(f"Количество заражений за вычетом умерших и вылечившихся {yesterday}", style = { 'text-align': 'center' }),
+        daq.LEDDisplay(
+            id = 'digital2',
+            # label = f"Количество заражений на {yesterday}",
+            style = { "fontSize": 40, 'text-align': 'center' },
+            # labelPosition = 'bottom',
+            value = lastval,  # not sure what to put here
+            size = 64,
+            color = "#FF5E5E"
+        )]),
     html.Div([
         dcc.Graph(id = 'delta for day ', figure = fig7)]),
     html.Div([
