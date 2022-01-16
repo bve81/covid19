@@ -70,12 +70,19 @@ for value in deathdata[currentdate]:
 d2 = peoplerecovered["Recovered cases"]
 for value in df[currentdate]:
     d3 = value
-    print(d3)
+
 
 deathdata2 = deathdata.loc[:, '1_22_20': currentdate]
+
 for i in deathdata2.columns:
     for value in deathdata2.values:
         dt = value
+        y = {'col': dt}
+        dy = pd.DataFrame(data = y)
+
+for value in dy['col']:
+        dyd = dy['col'] - dy['col'].shift(1)
+print(dyd)
 
 for i in df.columns:
     for value in df.values:
@@ -94,13 +101,16 @@ df3 = df.loc[:, (datetime.now() - timedelta(8)).strftime('%-m_%-d_%y'): currentd
 for i in df3.columns:
     for value in df3.values:
         ccAI = value
+ccAI02 = dyd.iloc[[*range(0), *range(-8, 0)]]
+
+
 # AI etna Forecast
 # Read the data
 hld = pd.DataFrame({
       'holiday': 'newyear',
       'ds': pd.to_datetime(['2021-01-01', '2021-01-02', '2021-01-03', '2021-01-04', '2021-01-05', '2021-12-31', '2022-01-01',
                             '2022-01-02','2022-01-03','2022-01-04','2022-01-05','2022-01-06',
-                            '2022-01-07','2022-01-08','2022-01-09']),
+                            '2022-01-07','2022-01-08','2022-01-09','2022-01-19']),
       'lower_window': -3,
       'upper_window': 2,
     })
@@ -111,6 +121,7 @@ original_df["target"] = original_df["values"]
 original_df.drop(columns = ["dates", "values"], inplace = True)
 original_df["segment"] = "main"
 original_df.head()
+
 
 # Create a TSDataset
 df = TSDataset.to_dataset(original_df)
@@ -130,7 +141,22 @@ pipeline.fit(ts)
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten = True)
 print(dfs)
+# AI forecast of ded per day
+dataDYD ={'dates': datelist, 'values': dyd}
+deathdata_df = pd.DataFrame(data = dataDYD)
+deathdata_df["timestamp"] = pd.to_datetime(deathdata_df["dates"])
+deathdata_df["target"] = deathdata_df["values"]
+deathdata_df.drop(columns = ["dates", "values"], inplace = True)
+deathdata_df["segment"] = "main"
+deathdata_df.head()
+df02 = TSDataset.to_dataset(deathdata_df)
+ts02 = TSDataset(df02, freq = "D")
+pipeline02 = Pipeline(model = ProphetModel( yearly_seasonality=True), horizon = HORIZON)
+pipeline02.fit(ts02)
+forecast_ts02 = pipeline02.forecast()
+dfs02 = forecast_ts02.to_pandas(flatten = True)
 
+print(dfs02)
 # ________________________________________________________________
 recvsdead = [d1, d2[0]]  # Values for Pie charts
 overall = active  # Values for Pie charts
@@ -150,6 +176,12 @@ fig11 = go.Figure()
 fig11.update_layout(title_text = 'Количество инфицированных по дням')
 fig11.add_trace(go.Bar(name = 'Daily infected', x = datelist, y = cc))
 fig11.add_trace(go.Scatter(x = datelist, y = cc,
+                           mode = 'lines+markers',
+                           name = 'Текущий тренд'))
+figDYD = go.Figure()
+figDYD.update_layout(title_text = 'Количество летальных исходов по дням')
+figDYD.add_trace(go.Bar(name = 'Летальных случаев за день', x = datelist, y = dyd))
+figDYD.add_trace(go.Scatter(x = datelist, y = dyd,
                            mode = 'lines+markers',
                            name = 'Текущий тренд'))
 fig9 = go.Figure()
@@ -173,6 +205,18 @@ figAI.add_trace(go.Scatter(x = aidatelist, y = dfs["target"],
                            mode = 'lines+markers',
                            name = 'Прогноз от AI'), 1, 1)
 
+figAI02 = make_subplots(rows = 1, cols = 1, specs = [[{ }]], shared_xaxes = True,
+                      shared_yaxes = False, vertical_spacing = 0.001)
+#
+figAI02.update_layout(title_text = 'Прогноз смертности с использованием AI на следующие 8 дней')
+figAI02.add_trace(go.Bar(name = 'Умерло зв день', x = datelistAI, y = ccAI02), 1, 1)
+figAI02.add_trace(go.Scatter(x = datelistAI, y = ccAI02,
+                           mode = 'lines+markers',
+                           name = 'Текущий тренд'), 1, 1)
+figAI02.add_trace(go.Scatter(x = aidatelist, y = dfs02["target"],
+                           mode = 'lines+markers',
+                           name = 'Прогноз от AI'), 1, 1)
+
 fig10 = go.Figure(data = [
     go.Bar(name = 'Все инфицированные', x = datelist, y = d[4:], width = [15], text = d[4:], textposition = 'auto'),
     go.Bar(name = 'Текущие (активные) случаи заражения', x = datelistFig10, y = active, width = [15], text = active,
@@ -189,7 +233,7 @@ fig10.add_trace(go.Scatter(x = datelistFig10, y = active,
                            name = 'Текущий тренд'))
 
 figDD = go.Figure()
-figDD.update_layout(title_text = 'Количество литальных исходов на общее количество заражений')
+figDD.update_layout(title_text = 'Количество летальных исходов на общее количество заражений')
 figDD.add_trace(go.Bar(x = datelist, y = d[4:],
                        #                            mode = 'lines+markers',
                        name = 'Общее кол-во инфицированных'
@@ -250,7 +294,11 @@ app.layout = html.Div([
     html.Div([
         dcc.Graph(id = 'Total case dayli', figure = fig11)]),
     html.Div([
+        dcc.Graph(id = 'Total death per day ', figure = figDYD)]),
+    html.Div([
         dcc.Graph(id = 'Daily cases AI forecast', figure = figAI)]),
+    html.Div([
+        dcc.Graph(id = 'Daily cases AI forecast 02', figure = figAI02)]),
     html.Div([
         dcc.Graph(id = 'Active vs total', figure = fig10)]),
     html.Div([
