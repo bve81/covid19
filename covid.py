@@ -132,8 +132,8 @@ HORIZON = 8
 
 # Fit the pipeline
 pipeline = Pipeline(model = ProphetModel(
-                                          changepoints=['2022-01-10'], changepoint_range=0.2,
-                                          holidays = hld, holidays_prior_scale=10.0,
+                                        changepoint_range=0.98,
+                                          holidays = hld, holidays_prior_scale=10.0, daily_seasonality=True,
                                          ), horizon = HORIZON)
 pipeline.fit(ts)
 #changepoints=['2022-01-10'], changepoint_range=0.2 daily_seasonality = True, seasonality_mode='multiplicative',yearly_seasonality=True, seasonality_prior_scale=10.0,
