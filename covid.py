@@ -131,12 +131,11 @@ ts = TSDataset(df, freq = "D")
 HORIZON = 8
 
 # Fit the pipeline
-pipeline = Pipeline(model = ProphetModel(holidays = hld, holidays_prior_scale=9.0,
-
-                                           daily_seasonality=True,
+pipeline = Pipeline(model = ProphetModel( changepoints = ['2022-01-10','2022-01-18', '2022-01-20'], changepoint_range =0.5, changepoint_prior_scale = 10.0, yearly_seasonality = False,
+                                           daily_seasonality=False,
                                          ), horizon = HORIZON)
 pipeline.fit(ts)
-#changepoints=['2022-01-10'], changepoint_range=0.2 daily_seasonality = True, seasonality_mode='multiplicative',yearly_seasonality=True, seasonality_prior_scale=10.0,
+#changepoints= changepoint_range=0.2 daily_seasonality = True, seasonality_mode='multiplicative',yearly_seasonality=True, seasonality_prior_scale=10.0,
 # Make the forecast
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten = True)
