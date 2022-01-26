@@ -1,4 +1,5 @@
 import dash
+import holidays
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -106,14 +107,8 @@ ccAI02 = dyd.iloc[[*range(0), *range(-8, 0)]]
 
 # AI etna Forecast
 # Read the data
-hld = pd.DataFrame({
-      'holiday': 'newyear',
-      'ds': pd.to_datetime(['2021-01-01', '2021-01-02', '2021-01-03', '2021-01-04', '2021-01-05', '2021-12-31', '2022-01-01',
-                            '2022-01-02','2022-01-03','2022-01-04','2022-01-05','2022-01-06',
-                            '2022-01-07','2022-01-08','2022-01-09','2022-01-19']),
-      'lower_window': -3,
-      'upper_window': 2,
-    })
+
+
 dataAI = { 'dates': datelist, 'values': cc }
 original_df = pd.DataFrame(data = dataAI)
 original_df["timestamp"] = pd.to_datetime(original_df["dates"])
@@ -132,15 +127,16 @@ HORIZON = 8
 
 # Fit the pipeline
 pipeline = Pipeline(model = ProphetModel( changepoints = ['2022-01-10','2022-01-18', '2022-01-20'], changepoint_range =0.5, changepoint_prior_scale = 10.0, yearly_seasonality = False,
-                                           daily_seasonality=False,
-                                         ), horizon = HORIZON)
+                                           daily_seasonality=True,
+                                         ), horizon = HORIZON, )
 pipeline.fit(ts)
 #changepoints= changepoint_range=0.2 daily_seasonality = True, seasonality_mode='multiplicative',yearly_seasonality=True, seasonality_prior_scale=10.0,
 # Make the forecast
 forecast_ts = pipeline.forecast()
 dfs = forecast_ts.to_pandas(flatten = True)
 print(dfs)
-# AI forecast of ded per day
+
+# AI forecast of died per day
 dataDYD ={'dates': datelist, 'values': dyd}
 deathdata_df = pd.DataFrame(data = dataDYD)
 deathdata_df["timestamp"] = pd.to_datetime(deathdata_df["dates"])
@@ -158,7 +154,7 @@ dfs02 = forecast_ts02.to_pandas(flatten = True)
 print(dfs02)
 # ________________________________________________________________
 recvsdead = [d1, d2[0]]  # Values for Pie charts
-overall = active  # Values for Pie charts
+
 
 # -----------------------Pie charts
 
